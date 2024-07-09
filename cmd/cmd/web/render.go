@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cloudykit/jet"
+	"github.com/CloudyKit/jet/v6"
+	"github.com/justinas/nosurf"
 )
 
 type TemplateData struct {
@@ -17,8 +18,18 @@ type TemplateData struct {
 }
 
 func (a *application) defaultData(td *TemplateData, r *http.Request) *TemplateData {
-
 	td.URL = a.server.url
+
+	if a.session != nil {
+		if a.session.Exists(r.Context(), sessionKeyUserId) {
+			td.IsAuthenticated = true
+			td.AuthUser = a.session.GetString(r.Context(), sessionKeyUserName)
+		}
+
+		td.Flash = a.session.PopString(r.Context(), "flash")
+	}
+
+	td.CSRFToken = nosurf.Token(r)
 	return td
 }
 
